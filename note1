@@ -1,0 +1,297 @@
+<script>
+
+/* =========================
+INITIAL DATA RENDER
+========================= */
+
+document.addEventListener("DOMContentLoaded", () => {
+  renderCases()
+  renderQs()
+  initNavigation()
+  initAccordion()
+})
+
+/* =========================
+PANEL SWITCHING
+========================= */
+
+function show(panelId, navEl) {
+
+  document.querySelectorAll(".panel").forEach(p => {
+    p.classList.remove("active")
+  })
+
+  document.querySelectorAll(".nav-item").forEach(n => {
+    n.classList.remove("active")
+  })
+
+  const panel = document.getElementById(panelId)
+  if(panel) panel.classList.add("active")
+
+  const nav =
+    navEl ||
+    document.querySelector(`[data-panel="${panelId}"]`)
+
+  if(nav) nav.classList.add("active")
+
+  window.scrollTo({top:0,behavior:"smooth"})
+
+  if(panelId === "cases") renderCases()
+  if(panelId === "questions") renderQs()
+}
+
+/* =========================
+ACCORDION
+========================= */
+
+function initAccordion(){
+
+  document.querySelectorAll(".acc-trigger")
+  .forEach(trigger => {
+
+    trigger.addEventListener("click", () => {
+
+      const item = trigger.closest(".acc-item")
+
+      if(item){
+        item.classList.toggle("open")
+      }
+
+    })
+
+  })
+
+}
+
+function expandAll(panelId){
+
+  document
+  .querySelectorAll(`#${panelId} .acc-item`)
+  .forEach(el => el.classList.add("open"))
+
+}
+
+function collapseAll(panelId){
+
+  document
+  .querySelectorAll(`#${panelId} .acc-item`)
+  .forEach(el => el.classList.remove("open"))
+
+}
+
+/* =========================
+SEARCH
+========================= */
+
+let searchTimer
+
+function doSearch(query){
+
+  clearTimeout(searchTimer)
+
+  searchTimer = setTimeout(()=>{
+
+    const text = query.trim().toLowerCase()
+
+    if(!text) return
+
+    const panels = ["u1","u2","u3","u4","u5","cases","questions"]
+
+    for(const id of panels){
+
+      const el = document.getElementById(id)
+
+      if(el && el.textContent.toLowerCase().includes(text)){
+
+        show(id)
+        expandAll(id)
+
+        break
+      }
+
+    }
+
+  },300)
+
+}
+
+/* =========================
+CASE FILTER
+========================= */
+
+function filterCases(type, btn){
+
+  document
+  .querySelectorAll("#cases-filter .chip")
+  .forEach(c => c.classList.remove("active"))
+
+  if(btn) btn.classList.add("active")
+
+  renderCases(type)
+
+}
+
+function renderCases(filter="all"){
+
+  const container = document.getElementById("cases-list")
+
+  const filtered = CASES.filter(c => {
+
+    if(filter === "all") return true
+
+    if(["u1","u2","u3","u4","u5"].includes(filter))
+      return c.units.includes(filter)
+
+    return c.tags.includes(filter)
+
+  })
+
+  container.innerHTML = filtered.map(c => `
+  
+  <div class="case-card">
+
+    <div class="c-name">${c.name}</div>
+
+    <div class="c-meta">
+
+      <span class="tag tag-year">${c.year}</span>
+
+      ${c.units.map(u =>
+        `<span class="tag tag-unit">${u.replace("u","Unit ")}</span>`
+      ).join("")}
+
+      ${c.principles.map(p =>
+        `<span class="tag tag-p">${p}</span>`
+      ).join("")}
+
+    </div>
+
+    <div class="c-held">${c.held}</div>
+
+    <div class="c-sig">${c.sig}</div>
+
+  </div>
+
+  `).join("")
+
+}
+
+/* =========================
+QUESTION FILTER
+========================= */
+
+function filterQs(type,btn){
+
+  document
+  .querySelectorAll("#qs-filter .chip")
+  .forEach(c => c.classList.remove("active"))
+
+  if(btn) btn.classList.add("active")
+
+  renderQs(type)
+
+}
+
+function renderQs(filter="all"){
+
+  const container = document.getElementById("questions-list")
+
+  const filtered = QUESTIONS.filter(q => {
+
+    if(filter === "all") return true
+    if(filter === "long") return q.type === "long"
+    if(filter === "short") return q.type === "short"
+
+    return q.unit === filter
+
+  })
+
+  container.innerHTML = filtered.map((q,i)=>`
+
+  <div class="q-card">
+
+    <div class="q-trigger">
+
+      <div class="q-num">Q${i+1}</div>
+
+      <div class="q-text">${q.q}</div>
+
+      <div class="q-meta">
+
+        <span class="q-marks">${q.marks}</span>
+
+        <span class="diff diff-${q.diff}">
+          ${q.diff === "h" ? "Hard" : q.diff === "m" ? "Medium" : "Easy"}
+        </span>
+
+      </div>
+
+    </div>
+
+    <div class="q-answer-wrap">
+      <div class="q-answer">${q.ans}</div>
+    </div>
+
+  </div>
+
+  `).join("")
+
+  document.querySelectorAll(".q-card").forEach(card => {
+    card.addEventListener("click", () => {
+      card.classList.toggle("open")
+    })
+  })
+
+}
+
+/* =========================
+SCROLL PROGRESS
+========================= */
+
+window.addEventListener("scroll", () => {
+
+  const doc = document.documentElement
+
+  const height =
+    doc.scrollHeight - doc.clientHeight
+
+  const progress =
+    height ? (doc.scrollTop / height) * 100 : 0
+
+  document.getElementById("progress")
+  .style.width = progress + "%"
+
+})
+
+/* =========================
+THEME TOGGLE
+========================= */
+
+function toggleTheme(){
+
+  document.body.classList.toggle("light")
+
+}
+
+/* =========================
+NAVIGATION EVENTS
+========================= */
+
+function initNavigation(){
+
+  document.querySelectorAll(".nav-item")
+  .forEach(el => {
+
+    el.addEventListener("click", () => {
+
+      const panel = el.getAttribute("data-panel")
+
+      if(panel) show(panel,el)
+
+    })
+
+  })
+
+}
+
+</script>
